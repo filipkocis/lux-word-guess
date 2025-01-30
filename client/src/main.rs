@@ -130,6 +130,8 @@ impl Client {
 
     fn handle_input(connection: Arc<Mutex<Option<Connection>>>, config: Arc<Mutex<ClientConfig>>) -> AppResult<()> {
         loop {
+            thread::sleep(std::time::Duration::from_millis(10));
+
             let state = {
                 config.lock().unwrap().state
             };
@@ -289,7 +291,11 @@ impl Client {
             },
             Command::RequestMatchGuess => {
                 println!("Starting new match...");
-                let guess = Self::prompt("Set a word to guess")?;
+                let mut guess = Self::prompt("Set a word to guess")?;
+                while guess.is_empty() {
+                    println!("Word cannot be ampty");
+                    guess = Self::prompt("Set a word to guess")?;
+                }
                 let mut lock = self.connection.lock().unwrap();
                 let stream = lock.as_mut().expect("No connection").writer();
                 Self::send(stream, Command::SetGuess(guess))?;
